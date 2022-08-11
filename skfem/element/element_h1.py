@@ -10,6 +10,13 @@ class ElementH1(Element):
     def gbasis(self, mapping, X, i, tind=None):
         """Identity transformation."""
         phi, dphi = self.lbasis(X, i)
+
+        #Manifold fix
+        if mapping.dim != self.dim:
+            dphi_bak = dphi
+            dphi = np.zeros((mapping.dim, dphi.shape[1]))
+            dphi[:self.dim, :] = dphi_bak
+
         invDF = mapping.invDF(X, tind)
         if len(X.shape) == 2:
             return (DiscreteField(

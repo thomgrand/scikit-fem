@@ -92,7 +92,7 @@ def from_meshio(m,
     mesh_type = MESH_TYPE_MAPPING[meshio_type]
 
     # create p and t
-    p = np.ascontiguousarray(mesh_type.strip_extra_coordinates(m.points).T)
+    p = np.ascontiguousarray(m.points.T) #Extra coordinates are kept in case of manifold meshes # = np.ascontiguousarray(mesh_type.strip_extra_coordinates(m.points).T)
     t = np.ascontiguousarray(cells[meshio_type].T)
 
     # reorder t if needed

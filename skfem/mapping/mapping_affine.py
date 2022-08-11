@@ -217,3 +217,43 @@ class MappingAffine(Mapping):
         n = np.einsum('ijkl,ik->jkl', invDF, N)
         nlength = np.sqrt(np.sum(n ** 2, axis=0))
         return np.einsum('ijk,jk->ijk', n, 1. / nlength)
+
+
+class MappingAffineManifold(MappingAffine):
+    """An affine mapping for simplical elements."""
+
+    def __init__(self, mesh):
+        dim = mesh.p.shape[0]
+        elem_dim = mesh.t.shape[0]
+
+        if elem_dim == dim + 1:
+            super().__init__(mesh)
+
+        else:
+            assert elem_dim == dim, "Only implemented for d-1 manifolds"
+            nt = mesh.t.shape[1]
+            A = np.zeros((nt, dim, dim))
+            self.b = mesh.p[:, mesh.t[0]]
+
+            for i in range(elem_dim-1):
+                A[..., i] = (mesh.p[:, mesh.t[i + 1]] -
+                                mesh.p[:, mesh.t[0]]).T
+
+            A[..., -1] = np.cross(A[..., 0], A[..., 1])
+            A[..., -1] /= np.linalg.norm(A[..., -1], axis=-1, keepdims=True)
+            self.detA = np.linalg.det(A)
+            self.invA = np.linalg.inv(A)
+
+            self.A = np.transpose(A, axes=(1, 2, 0))
+            self.invA = np.transpose(self.invA, axes=(1, 2, 0))
+            
+
+            self.dim = dim
+            self.mesh = mesh  # this is required in ElementH2
+
+    def F(self, X, tind=None):
+        if X.shape[0] < self.dim:
+            X = np.concatenate((X, np.zeros((self.dim - X.shape[0], X.shape[1]))), axis=0)
+
+        return super().F(X, tind)
+
