@@ -238,8 +238,13 @@ class MappingAffineManifold(MappingAffine):
             for i in range(elem_dim-1):
                 A[..., i] = (mesh.p[:, mesh.t[i + 1]] -
                                 mesh.p[:, mesh.t[0]]).T
+            if dim == 3:
+                A[..., -1] = np.cross(A[..., 0], A[..., 1])
+            elif dim == 2:
+                A[..., -1] = np.stack([-A[..., 1, 0], A[..., 0, 0]], axis=-1)
+            else:
+                assert False, "Unsupported dimensionality selected"
 
-            A[..., -1] = np.cross(A[..., 0], A[..., 1])
             A[..., -1] /= np.linalg.norm(A[..., -1], axis=-1, keepdims=True)
             self.detA = np.linalg.det(A)
             self.invA = np.linalg.inv(A)
